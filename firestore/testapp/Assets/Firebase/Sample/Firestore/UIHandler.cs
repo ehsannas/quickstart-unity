@@ -94,11 +94,7 @@ namespace Firebase.Sample.Firestore {
         rightNext = rightEnumerator.MoveNext();
       }
 
-      if (leftNext == rightNext) {
-        return true;
-      }
-
-      return false;
+      return leftNext == rightNext;
     }
 
     /**
@@ -218,6 +214,24 @@ namespace Firebase.Sample.Firestore {
       }
     }
 
+    /**
+     * Tests a *very* basic trip through the Firestore API.
+     */
+    protected IEnumerator GetKnownValue() {
+      DocumentReference doc1 = db.Collection("col1").Document("doc1");
+      var task = doc1.GetSnapshotAsync();
+      yield return new WaitForTaskCompletion(this, task);
+      if (!(task.IsFaulted || task.IsCanceled)) {
+        DocumentSnapshot snap = task.Result;
+        IDictionary<string, object> dict = snap.ToDictionary();
+        if (dict.ContainsKey("field1")) {
+          fieldContents = dict["field1"].ToString();
+        } else {
+          DebugLog("ERROR: Successfully retrieved col1/doc1, but it doesn't contain 'field1' key");
+        }
+      }
+    }
+
     private static string DictToString(IDictionary<string, object> d) {
       return "{ " + d
           .Select(kv => "(" + kv.Key + ", " + kv.Value + ")")
@@ -253,7 +267,7 @@ namespace Firebase.Sample.Firestore {
 
         DebugLog("INFO: Wrote data successfully.");
       } else {
-        DebugLog("ERROR: An error occurred.");
+        DebugLog("ERROR:" + setTask.Exception.ToString());
       }
     }
 
@@ -272,7 +286,7 @@ namespace Firebase.Sample.Firestore {
 
         DebugLog("INFO: Document updated successfully.");
       } else {
-        DebugLog("ERROR: An error occurred.");
+        DebugLog("ERROR:" + updateTask.Exception.ToString());
       }
     }
 
@@ -283,7 +297,7 @@ namespace Firebase.Sample.Firestore {
       yield return new WaitForTaskCompletion(this, getTask);
       if (!(getTask.IsFaulted || getTask.IsCanceled)) {
         DocumentSnapshot snap = getTask.Result;
-        if(!snap.Exists) {
+        if (!snap.Exists) {
           DebugLog("INFO: Document does not exist.");
         } else {
           IDictionary<string, object> resultData = snap.ToDictionary();
@@ -295,7 +309,7 @@ namespace Firebase.Sample.Firestore {
           }
         }
       } else {
-        DebugLog("ERROR: An error occurred.");
+        DebugLog("ERROR:" + getTask.Exception.ToString());
       }
     }
 
@@ -339,7 +353,8 @@ namespace Firebase.Sample.Firestore {
           DebugLog("Success: col2/batch_doc1 does not exist.");
         }
       } else {
-        DebugLog("ERROR: An error occurred while retrieving col2/batch_doc1");
+        DebugLog("ERROR: An error occurred while retrieving col2/batch_doc1.");
+        DebugLog("ERROR:" + get1.Exception.ToString());
       }
 
       Task<DocumentSnapshot> get2 = doc2.GetSnapshotAsync();
@@ -363,7 +378,8 @@ namespace Firebase.Sample.Firestore {
           DebugLog("ERROR: col2/batch_doc2 does not exist.");
         }
       } else {
-        DebugLog("ERROR: An error occurred while retrieving col2/batch_doc2");
+        DebugLog("ERROR: An error occurred while retrieving col2/batch_doc2.");
+        DebugLog("ERROR:" + get2.Exception.ToString());
       }
 
       Task<DocumentSnapshot> get3 = doc3.GetSnapshotAsync();
@@ -381,7 +397,8 @@ namespace Firebase.Sample.Firestore {
           DebugLog("ERROR: col2/batch_doc3 does not exist.");
         }
       } else {
-        DebugLog("ERROR: An error occurred while retrieving col2/batch_doc3");
+        DebugLog("ERROR: An error occurred while retrieving col2/batch_doc3.");
+        DebugLog("ERROR:" + get3.Exception.ToString());
       }
     }
 
@@ -418,6 +435,7 @@ namespace Firebase.Sample.Firestore {
         DebugLog("INFO: Transaction completed with status: " + result);
       } else {
         DebugLog("ERROR: An error occurred while performing the transaction.");
+        DebugLog("ERROR:" + txnTask.Exception.ToString());
       }
 
       if (!(txnTask.IsFaulted || txnTask.IsCanceled)) {
@@ -433,7 +451,8 @@ namespace Firebase.Sample.Firestore {
             DebugLog("Success: col3/txn_doc1 does not exist.");
           }
         } else {
-          DebugLog("ERROR: An error occurred while retrieving col3/txn_doc1");
+          DebugLog("ERROR: An error occurred while retrieving col3/txn_doc1.");
+          DebugLog("ERROR:" + get1.Exception.ToString());
         }
         Task<DocumentSnapshot> get2 = doc2.GetSnapshotAsync();
         yield return new WaitForTaskCompletion(this, get2);
@@ -456,7 +475,8 @@ namespace Firebase.Sample.Firestore {
             DebugLog("ERROR: col3/txn_doc2 does not exist.");
           }
         } else {
-          DebugLog("ERROR: An error occurred while retrieving col3/txn_doc2");
+          DebugLog("ERROR: An error occurred while retrieving col3/txn_doc2.");
+          DebugLog("ERROR:" + get2.Exception.ToString());
         }
 
         Task<DocumentSnapshot> get3 = doc3.GetSnapshotAsync();
@@ -475,6 +495,7 @@ namespace Firebase.Sample.Firestore {
           }
         } else {
           DebugLog("ERROR: An error occurred while retrieving col3/txn_doc3");
+          DebugLog("ERROR:" + get3.Exception.ToString());
         }
       }
     }
